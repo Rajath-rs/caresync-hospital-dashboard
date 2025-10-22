@@ -18,28 +18,36 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="#dashboard" class="nav-item active">
+            <a href="#dashboard" class="nav-item active" data-section="dashboard">
                 <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="#emergency" class="nav-item emergency-alert">
+            <a href="#emergency" class="nav-item emergency-alert" data-section="emergency">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span>Emergency Alerts</span>
                 <span class="badge" id="emergencyBadge">0</span>
             </a>
-            <a href="#appointments" class="nav-item">
-                <i class="fas fa-calendar-check"></i>
-                <span>Appointments</span>
-            </a>
-            <a href="#doctors" class="nav-item">
-                <i class="fas fa-user-md"></i>
-                <span>Doctors</span>
-            </a>
-            <a href="#beds" class="nav-item">
+            <a href="#beds" class="nav-item" data-section="beds">
                 <i class="fas fa-bed"></i>
                 <span>Bed Management</span>
             </a>
-            <a href="#settings" class="nav-item">
+            <a href="#doctors" class="nav-item" data-section="doctors">
+                <i class="fas fa-user-md"></i>
+                <span>Doctor Management</span>
+            </a>
+            <a href="#appointments" class="nav-item" data-section="appointments">
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="#ambulance" class="nav-item" data-section="ambulance">
+                <i class="fas fa-ambulance"></i>
+                <span>Ambulance Fleet</span>
+            </a>
+            <a href="#analytics" class="nav-item" data-section="analytics">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#settings" class="nav-item" data-section="settings">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </a>
@@ -59,11 +67,11 @@
         <header class="top-bar">
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search patients, doctors, appointments...">
+                <input type="text" placeholder="Search patients, doctors, appointments..." id="searchInput">
             </div>
             
             <div class="top-bar-actions">
-                <button class="icon-btn">
+                <button class="icon-btn" id="notificationBtn">
                     <i class="fas fa-bell"></i>
                     <span class="notification-dot"></span>
                 </button>
@@ -77,77 +85,116 @@
             </div>
         </header>
 
-        <!-- Dashboard Content -->
+        <!-- Dashboard Content Container -->
         <div class="dashboard-content">
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card card-blue">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-injured"></i>
+            
+            <!-- SECTION 1: OVERVIEW DASHBOARD -->
+            <div id="dashboardSection" class="content-section active">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card card-blue">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalPatients">0</h3>
+                            <p>Total Patients</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> <span id="patientTrend">0</span>%
+                            </span>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 id="totalPatients">0</h3>
-                        <p>Total Patients</p>
-                        <span class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> 12%
-                        </span>
+
+                    <div class="stat-card card-green">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalDoctors">0</h3>
+                            <p>Active Doctors</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> <span id="doctorTrend">0</span>%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-orange">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="todayAppointments">0</h3>
+                            <p>Today's Appointments</p>
+                            <span class="stat-change neutral">
+                                <i class="fas fa-minus"></i> <span id="appointmentTrend">0</span>%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-red">
+                        <div class="stat-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="availableBeds">0</h3>
+                            <p>Available Beds</p>
+                            <span class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i> <span id="bedTrend">0</span>%
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card card-green">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-md"></i>
+                <!-- Quick Actions -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
                     </div>
-                    <div class="stat-content">
-                        <h3 id="totalDoctors">0</h3>
-                        <p>Active Doctors</p>
-                        <span class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> 8%
-                        </span>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" onclick="showSection('beds')">
+                            <i class="fas fa-bed"></i>
+                            <span>Manage Beds</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('doctors')">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Add Doctor</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('ambulance')">
+                            <i class="fas fa-ambulance"></i>
+                            <span>Ambulance Status</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('appointments')">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>View Appointments</span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="stat-card card-orange">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-alt"></i>
+                <!-- Emergency Alerts Preview -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-exclamation-circle"></i> Recent Emergency Alerts</h2>
+                        <button class="btn-secondary" onclick="showSection('emergency')">
+                            <i class="fas fa-eye"></i> View All
+                        </button>
                     </div>
-                    <div class="stat-content">
-                        <h3 id="todayAppointments">0</h3>
-                        <p>Today's Appointments</p>
-                        <span class="stat-change neutral">
-                            <i class="fas fa-minus"></i> 0%
-                        </span>
-                    </div>
-                </div>
-
-                <div class="stat-card card-red">
-                    <div class="stat-icon">
-                        <i class="fas fa-bed"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="availableBeds">0</h3>
-                        <p>Available Beds</p>
-                        <span class="stat-change negative">
-                            <i class="fas fa-arrow-down"></i> 15%
-                        </span>
+                    <div id="recentEmergencyAlerts" class="alerts-container">
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <p>No recent emergencies</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Emergency Alerts Section -->
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <h2>
-                        <i class="fas fa-exclamation-circle"></i>
-                        Emergency Alerts
-                    </h2>
-                    <button class="btn-secondary">
-                        <i class="fas fa-filter"></i> Filter
-                    </button>
+            <!-- SECTION 2: EMERGENCY ALERTS -->
+            <div id="emergencySection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-exclamation-triangle"></i> Emergency Alerts</h1>
+                    <p>Real-time emergency response system</p>
                 </div>
                 
                 <div id="emergencyAlerts" class="alerts-container">
-                    <!-- Emergency alerts will be populated here -->
                     <div class="empty-state">
                         <i class="fas fa-check-circle"></i>
                         <p>No active emergencies</p>
@@ -155,43 +202,359 @@
                 </div>
             </div>
 
-            <!-- Recent Appointments -->
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <h2>
-                        <i class="fas fa-calendar-check"></i>
-                        Recent Appointments
-                    </h2>
-                    <a href="#appointments" class="link-btn">View All</a>
+            <!-- SECTION 3: BED MANAGEMENT -->
+            <div id="bedsSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-bed"></i> Bed Management</h1>
+                    <button class="btn-primary" onclick="openAddBedModal()">
+                        <i class="fas fa-plus"></i> Add Bed Category
+                    </button>
                 </div>
-                
-                <div class="appointments-table">
-                    <table>
+
+                <div class="management-grid">
+                    <!-- General Ward -->
+                    <div class="management-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-procedures"></i> General Ward</h3>
+                            <span class="status-badge available">Available</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Beds</span>
+                                <span class="stat-value" id="generalTotal">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Available</span>
+                                <span class="stat-value text-success" id="generalAvailable">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Occupied</span>
+                                <span class="stat-value text-danger" id="generalOccupied">0</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="generalProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick="updateBeds('general', 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn-edit" onclick="updateBeds('general', -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ICU -->
+                    <div class="management-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-heartbeat"></i> ICU</h3>
+                            <span class="status-badge critical">Critical</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Beds</span>
+                                <span class="stat-value" id="icuTotal">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Available</span>
+                                <span class="stat-value text-success" id="icuAvailable">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Occupied</span>
+                                <span class="stat-value text-danger" id="icuOccupied">0</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-danger" id="icuProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick="updateBeds('icu', 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn-edit" onclick="updateBeds('icu', -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Emergency -->
+                    <div class="management-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-ambulance"></i> Emergency</h3>
+                            <span class="status-badge warning">Moderate</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Beds</span>
+                                <span class="stat-value" id="emergencyTotal">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Available</span>
+                                <span class="stat-value text-success" id="emergencyAvailable">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Occupied</span>
+                                <span class="stat-value text-danger" id="emergencyOccupied">0</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-warning" id="emergencyProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick="updateBeds('emergency', 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn-edit" onclick="updateBeds('emergency', -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Private Rooms -->
+                    <div class="management-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-door-closed"></i> Private Rooms</h3>
+                            <span class="status-badge available">Available</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Rooms</span>
+                                <span class="stat-value" id="privateTotal">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Available</span>
+                                <span class="stat-value text-success" id="privateAvailable">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Occupied</span>
+                                <span class="stat-value text-danger" id="privateOccupied">0</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-info" id="privateProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick="updateBeds('private', 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn-edit" onclick="updateBeds('private', -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: DOCTOR MANAGEMENT -->
+            <div id="doctorsSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-user-md"></i> Doctor Management</h1>
+                    <button class="btn-primary" onclick="openAddDoctorModal()">
+                        <i class="fas fa-user-plus"></i> Add Doctor
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Doctor Name</th>
+                                <th>Specialization</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Today's Appointments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading doctors...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 5: APPOINTMENTS -->
+            <div id="appointmentsSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-calendar-check"></i> Appointments</h1>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterAppointments('all')">All</button>
+                        <button class="filter-btn" onclick="filterAppointments('today')">Today</button>
+                        <button class="filter-btn" onclick="filterAppointments('upcoming')">Upcoming</button>
+                        <button class="filter-btn" onclick="filterAppointments('completed')">Completed</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Patient Name</th>
                                 <th>Doctor</th>
                                 <th>Date & Time</th>
+                                <th>Department</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="appointmentsBody">
-                            <!-- Appointments will be populated here -->
+                        <tbody id="appointmentsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading appointments...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- SECTION 6: AMBULANCE MANAGEMENT -->
+            <div id="ambulanceSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-ambulance"></i> Ambulance Fleet Management</h1>
+                    <button class="btn-primary" onclick="openAddAmbulanceModal()">
+                        <i class="fas fa-plus"></i> Add Ambulance
+                    </button>
+                </div>
+
+                <!-- Ambulance Stats -->
+                <div class="ambulance-stats-grid">
+                    <div class="ambulance-stat-card">
+                        <i class="fas fa-ambulance"></i>
+                        <div>
+                            <h3 id="totalAmbulances">0</h3>
+                            <p>Total Ambulances</p>
+                        </div>
+                    </div>
+                    <div class="ambulance-stat-card available">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h3 id="availableAmbulances">0</h3>
+                            <p>Available</p>
+                        </div>
+                    </div>
+                    <div class="ambulance-stat-card active">
+                        <i class="fas fa-route"></i>
+                        <div>
+                            <h3 id="activeAmbulances">0</h3>
+                            <p>On Duty</p>
+                        </div>
+                    </div>
+                    <div class="ambulance-stat-card maintenance">
+                        <i class="fas fa-tools"></i>
+                        <div>
+                            <h3 id="maintenanceAmbulances">0</h3>
+                            <p>Maintenance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ambulance List -->
+                <div class="ambulance-grid" id="ambulanceList">
+                    <!-- Ambulances will be loaded here -->
+                </div>
+            </div>
+
+            <!-- SECTION 7: ANALYTICS -->
+            <div id="analyticsSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-chart-line"></i> Analytics & Reports</h1>
+                    <select class="filter-select">
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 3 Months</option>
+                    </select>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Patient Flow</h3>
+                        <canvas id="patientFlowChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Department Statistics</h3>
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Appointment Trends</h3>
+                        <canvas id="appointmentChart"></canvas>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Bed Occupancy</h3>
+                        <canvas id="bedOccupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 8: SETTINGS -->
+            <div id="settingsSection" class="content-section">
+                <div class="section-title-header">
+                    <h1><i class="fas fa-cog"></i> Hospital Settings</h1>
+                </div>
+
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <h3><i class="fas fa-hospital"></i> Hospital Information</h3>
+                        <form id="hospitalInfoForm">
+                            <div class="form-group">
+                                <label>Hospital Name</label>
+                                <input type="text" id="hospitalNameInput" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea id="hospitalAddress" class="form-input" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <input type="tel" id="hospitalPhone" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Emergency Contact</label>
+                                <input type="tel" id="emergencyPhone" class="form-input">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3><i class="fas fa-bell"></i> Notification Settings</h3>
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" class="toggle-input" checked>
+                                <span>Emergency Alerts</span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" class="toggle-input" checked>
+                                <span>Appointment Notifications</span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" class="toggle-input">
+                                <span>Low Bed Availability Alerts</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Firebase SDK - REPLACE WITH THIS -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<!-- Custom Scripts -->
-<script src="js/dashboard.js"></script>
-
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
