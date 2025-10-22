@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareSync - Hospital Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-hospital"></i>
+                <span>CareSync</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#emergency" class="nav-item emergency-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Emergency Alerts</span>
+                <span class="badge" id="emergencyBadge">0</span>
+            </a>
+            <a href="#appointments" class="nav-item">
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="#doctors" class="nav-item">
+                <i class="fas fa-user-md"></i>
+                <span>Doctors</span>
+            </a>
+            <a href="#beds" class="nav-item">
+                <i class="fas fa-bed"></i>
+                <span>Bed Management</span>
+            </a>
+            <a href="#settings" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search patients, doctors, appointments...">
+            </div>
+            
+            <div class="top-bar-actions">
+                <button class="icon-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Hospital+Admin&background=4F46E5&color=fff" alt="Profile">
+                    <div class="user-info">
+                        <span class="user-name" id="hospitalName">Loading...</span>
+                        <span class="user-role">Hospital Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card card-blue">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-injured"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalPatients">0</h3>
+                        <p>Total Patients</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 12%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-green">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalDoctors">0</h3>
+                        <p>Active Doctors</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 8%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-orange">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="todayAppointments">0</h3>
+                        <p>Today's Appointments</p>
+                        <span class="stat-change neutral">
+                            <i class="fas fa-minus"></i> 0%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-red">
+                    <div class="stat-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="availableBeds">0</h3>
+                        <p>Available Beds</p>
+                        <span class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i> 15%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Alerts Section -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>
+                        <i class="fas fa-exclamation-circle"></i>
+                        Emergency Alerts
+                    </h2>
+                    <button class="btn-secondary">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+                
+                <div id="emergencyAlerts" class="alerts-container">
+                    <!-- Emergency alerts will be populated here -->
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>No active emergencies</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Appointments -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>
+                        <i class="fas fa-calendar-check"></i>
+                        Recent Appointments
+                    </h2>
+                    <a href="#appointments" class="link-btn">View All</a>
+                </div>
+                
+                <div class="appointments-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsBody">
+                            <!-- Appointments will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK - REPLACE WITH THIS -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- Custom Scripts -->
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
