@@ -20,13 +20,17 @@
 
             <form id="loginForm" class="login-form">
                 <div class="form-group">
-                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
-                    <input type="email" id="email" required placeholder="hospital@example.com">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" id="email" required placeholder="hospital@example.com" autocomplete="email">
                 </div>
 
                 <div class="form-group">
-                    <label for="password"><i class="fas fa-lock"></i> Password</label>
-                    <input type="password" id="password" required placeholder="Enter your password">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" required placeholder="Enter your password" autocomplete="current-password">
                 </div>
 
                 <button type="submit" class="btn-login">
@@ -34,11 +38,12 @@
                 </button>
             </form>
 
-            <!-- CHANGED: Removed Forgot Password, Added Create Account -->
+            <!-- Create Account Link -->
             <div class="signup-link">
-                <p>Don't have an account? <a href="register.html">Create Account</a></p>
+                <p>Don't have an account? <a href="register.html" id="createAccountLink">Create Account</a></p>
             </div>
 
+            <!-- Loading Spinner -->
             <div id="loadingSpinner" class="loading-spinner hidden">
                 <div class="spinner"></div>
                 <p>Logging in...</p>
@@ -46,9 +51,21 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Auth Script -->
     <script src="js/auth.js"></script>
+    
+    <!-- Fallback for Create Account link -->
+    <script>
+        // Ensure create account link works
+        document.getElementById('createAccountLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'register.html';
+        });
+    </script>
 </body>
 </html>

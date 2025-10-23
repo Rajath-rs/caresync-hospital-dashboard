@@ -227,6 +227,9 @@ function openBedModal(category) {
     const modal = document.getElementById('bedModal');
     const title = document.getElementById('bedModalTitle');
     
+    // Close any other open modals first
+    closeAmbulanceModal();
+    
     title.textContent = `Manage ${category.charAt(0).toUpperCase() + category.slice(1)} Beds`;
     
     // Load current values
@@ -239,11 +242,17 @@ function openBedModal(category) {
     });
     
     modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
 }
 
 function closeBedModal() {
-    document.getElementById('bedModal').classList.remove('active');
+    const modal = document.getElementById('bedModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restore scroll
     currentBedCategory = null;
+    
+    // Reset form
+    document.getElementById('bedForm').reset();
 }
 
 window.openBedModal = openBedModal;
@@ -468,14 +477,39 @@ function createAmbulanceCard(id, ambulance) {
 }
 
 function openAmbulanceModal() {
-    document.getElementById('ambulanceModal').classList.add('active');
+    // Close any other open modals first
+    closeBedModal();
+    
+    const modal = document.getElementById('ambulanceModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
 }
 
 function closeAmbulanceModal() {
-    document.getElementById('ambulanceModal').classList.remove('active');
+    const modal = document.getElementById('ambulanceModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restore scroll
+    
+    // Reset form
     document.getElementById('ambulanceForm').reset();
 }
 
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const bedModal = document.getElementById('bedModal');
+    const ambulanceModal = document.getElementById('ambulanceModal');
+    
+    if (event.target === bedModal) {
+        closeBedModal();
+    }
+    if (event.target === ambulanceModal) {
+        closeAmbulanceModal();
+    }
+}
+
+// Export functions to window
+window.openBedModal = openBedModal;
+window.closeBedModal = closeBedModal;
 window.openAmbulanceModal = openAmbulanceModal;
 window.closeAmbulanceModal = closeAmbulanceModal;
 

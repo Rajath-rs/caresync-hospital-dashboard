@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareSync - Hospital Registration</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="register-box">
+            <div class="login-header">
+                <div class="logo-container">
+                    <i class="fas fa-hospital"></i>
+                    <h1>CareSync</h1>
+                </div>
+                <p>Register Your Hospital</p>
+            </div>
+
+            <form id="registerForm" class="login-form register-form">
+                <!-- Hospital Information -->
+                <div class="form-section">
+                    <h3><i class="fas fa-hospital-alt"></i> Hospital Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="hospitalName"><i class="fas fa-building"></i> Hospital Name *</label>
+                        <input type="text" id="hospitalName" required placeholder="Enter hospital name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hfrNumber"><i class="fas fa-id-card"></i> HFR Number *</label>
+                        <input type="text" id="hfrNumber" required placeholder="Enter 12-14 digit HFR number" 
+                               pattern="[0-9]{12,14}" maxlength="14">
+                        <small>Health Facility Registry Number (12-14 digits)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address"><i class="fas fa-map-marker-alt"></i> Address *</label>
+                        <textarea id="address" required placeholder="Enter complete hospital address" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city"><i class="fas fa-city"></i> City *</label>
+                            <input type="text" id="city" required placeholder="City">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="state"><i class="fas fa-map"></i> State *</label>
+                            <input type="text" id="state" required placeholder="State">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pincode"><i class="fas fa-mail-bulk"></i> Pincode *</label>
+                            <input type="text" id="pincode" required placeholder="Pincode" pattern="[0-9]{6}" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-section">
+                    <h3><i class="fas fa-phone"></i> Contact Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="phone"><i class="fas fa-phone-alt"></i> Hospital Contact Number *</label>
+                        <input type="tel" id="phone" required placeholder="Enter 10-digit mobile number" 
+                               pattern="[0-9]{10}" maxlength="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emergencyPhone"><i class="fas fa-ambulance"></i> Emergency Contact *</label>
+                        <input type="tel" id="emergencyPhone" required placeholder="Emergency contact number" 
+                               pattern="[0-9]{10}" maxlength="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email"><i class="fas fa-envelope"></i> Email Address *</label>
+                        <input type="email" id="email" required placeholder="hospital@example.com">
+                    </div>
+                </div>
+
+                <!-- Admin Credentials -->
+                <div class="form-section">
+                    <h3><i class="fas fa-user-shield"></i> Admin Credentials</h3>
+                    
+                    <div class="form-group">
+                        <label for="adminName"><i class="fas fa-user"></i> Admin Name *</label>
+                        <input type="text" id="adminName" required placeholder="Hospital administrator name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password"><i class="fas fa-lock"></i> Password *</label>
+                        <input type="password" id="password" required placeholder="Create strong password" minlength="6">
+                        <small>Minimum 6 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password *</label>
+                        <input type="password" id="confirmPassword" required placeholder="Re-enter password" minlength="6">
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="terms" required>
+                        <span>I agree to the <a href="#" target="_blank">Terms & Conditions</a> and <a href="#" target="_blank">Privacy Policy</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-user-plus"></i> Register Hospital
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="signup-link">
+                <p>Already have an account? <a href="index.html">Login Here</a></p>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="loading-spinner hidden">
+                <div class="spinner"></div>
+                <p>Creating your account...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Registration Script -->
+    <script src="js/register.js"></script>
+</body>
+</html>
