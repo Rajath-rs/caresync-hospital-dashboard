@@ -585,21 +585,32 @@ window.deleteAmbulance = deleteAmbulance;
 async function loadDoctors() {
     const tbody = document.getElementById('doctorsTableBody');
     if (!tbody) return;
-    
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
     
     try {
         const doctorsSnap = await db.collection('doctors')
             .where('hospitalId', '==', currentHospitalId)
+            .orderBy('createdAt', 'desc')
             .get();
         
         if (doctorsSnap.empty) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No doctors found</td></tr>';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center">
+                        <div class="empty-state">
+                            <i class="fas fa-user-md"></i>
+                            <p>No doctors found</p>
+                            <button class="btn-primary" onclick="openDoctorModal()">
+                                <i class="fas fa-plus"></i> Add First Doctor
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
             return;
         }
         
         tbody.innerHTML = '';
-        
         doctorsSnap.forEach(doc => {
             const doctor = doc.data();
             const row = document.createElement('tr');
@@ -607,16 +618,127 @@ async function loadDoctors() {
                 <td>${doctor.doctorName || 'N/A'}</td>
                 <td>${doctor.specialization || 'General'}</td>
                 <td>${doctor.phone || doctor.email || 'N/A'}</td>
-                <td><span class="status-badge available">Active</span></td>
+                <td>${doctor.hfrNumber || 'N/A'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editDoctor('${doc.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteDoctor('${doc.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(row);
         });
         
     } catch (error) {
         console.error('Error loading doctors:', error);
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading doctors</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading doctors</td></tr>';
     }
 }
+
+// Open Doctor Modal
+let editingDoctorId = null;
+
+function openDoctorModal(doctorId = null) {
+    editingDoctorId = doctorId;
+    const modal = document.getElementById('doctorModal');
+    const title = document.getElementById('doctorModalTitle');
+    const form = document.getElementById('doctorForm');
+    
+    form.reset();
+    
+    if (doctorId) {
+        title.textContent = 'Edit Doctor';
+        // Load doctor data
+        db.collection('doctors').doc(doctorId).get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('doctorName').value = data.doctorName || '';
+                document.getElementById('doctorSpecialization').value = data.specialization || '';
+                document.getElementById('doctorPhone').value = data.phone || '';
+                document.getElementById('doctorEmail').value = data.email || '';
+                document.getElementById('doctorHFR').value = data.hfrNumber || '';
+            }
+        });
+    } else {
+        title.textContent = 'Add New Doctor';
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDoctorModal() {
+    const modal = document.getElementById('doctorModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    editingDoctorId = null;
+    document.getElementById('doctorForm').reset();
+}
+
+// Doctor Form Submission
+document.getElementById('doctorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const doctorData = {
+        doctorName: document.getElementById('doctorName').value.trim(),
+        specialization: document.getElementById('doctorSpecialization').value.trim(),
+        phone: document.getElementById('doctorPhone').value.trim(),
+        email: document.getElementById('doctorEmail').value.trim(),
+        hfrNumber: document.getElementById('doctorHFR').value.trim(),
+        hospitalId: currentHospitalId,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        if (editingDoctorId) {
+            // Update existing doctor
+            await db.collection('doctors').doc(editingDoctorId).update(doctorData);
+            showNotification('Doctor updated successfully!', 'success');
+        } else {
+            // Add new doctor
+            doctorData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('doctors').add(doctorData);
+            showNotification('Doctor added successfully!', 'success');
+        }
+        
+        closeDoctorModal();
+        await loadDoctors();
+        await loadStatistics(); // Update stats
+        
+    } catch (error) {
+        console.error('Error saving doctor:', error);
+        showNotification('Error: ' + error.message, 'error');
+    }
+});
+
+// Edit Doctor
+function editDoctor(doctorId) {
+    openDoctorModal(doctorId);
+}
+
+// Delete Doctor
+async function deleteDoctor(doctorId) {
+    if (!confirm('Are you sure you want to delete this doctor?')) return;
+    
+    try {
+        await db.collection('doctors').doc(doctorId).delete();
+        showNotification('Doctor deleted successfully!', 'success');
+        await loadDoctors();
+        await loadStatistics();
+    } catch (error) {
+        console.error('Error deleting doctor:', error);
+        showNotification('Error deleting doctor', 'error');
+    }
+}
+
+window.openDoctorModal = openDoctorModal;
+window.closeDoctorModal = closeDoctorModal;
+window.editDoctor = editDoctor;
+window.deleteDoctor = deleteDoctor;
 
 // ==========================================
 // APPOINTMENTS
@@ -624,8 +746,8 @@ async function loadDoctors() {
 async function loadAppointments() {
     const tbody = document.getElementById('appointmentsTableBody');
     if (!tbody) return;
-    
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
     
     try {
         const appointmentsSnap = await db.collection('appointments')
@@ -635,34 +757,196 @@ async function loadAppointments() {
             .get();
         
         if (appointmentsSnap.empty) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No appointments found</td></tr>';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-check"></i>
+                            <p>No appointments found</p>
+                            <button class="btn-primary" onclick="openAppointmentModal()">
+                                <i class="fas fa-plus"></i> Add First Appointment
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
             return;
         }
         
         tbody.innerHTML = '';
-        
         appointmentsSnap.forEach(doc => {
             const apt = doc.data();
             const date = apt.appointmentDate?.toDate();
             const dateStr = date ? 
-                date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+                `${date.toLocaleDateString()} ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : 
                 'N/A';
+            
+            const statusClass = apt.status === 'confirmed' ? 'success' : 
+                               apt.status === 'cancelled' ? 'danger' : 'warning';
             
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${apt.patientName || 'N/A'}</td>
                 <td>Dr. ${apt.doctorName || 'N/A'}</td>
                 <td>${dateStr}</td>
-                <td><span class="status-badge available">${apt.status || 'Confirmed'}</span></td>
+                <td>${apt.reason || 'General Checkup'}</td>
+                <td><span class="status-badge ${statusClass}">${apt.status || 'Pending'}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editAppointment('${doc.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteAppointment('${doc.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(row);
         });
         
     } catch (error) {
         console.error('Error loading appointments:', error);
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading appointments</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading appointments</td></tr>';
     }
 }
+
+// Open Appointment Modal
+let editingAppointmentId = null;
+
+async function openAppointmentModal(appointmentId = null) {
+    editingAppointmentId = appointmentId;
+    const modal = document.getElementById('appointmentModal');
+    const title = document.getElementById('appointmentModalTitle');
+    const form = document.getElementById('appointmentForm');
+    
+    form.reset();
+    
+    // Load doctors for dropdown
+    await loadDoctorsDropdown();
+    
+    if (appointmentId) {
+        title.textContent = 'Edit Appointment';
+        db.collection('appointments').doc(appointmentId).get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('aptPatientName').value = data.patientName || '';
+                document.getElementById('aptDoctorId').value = data.doctorId || '';
+                document.getElementById('aptDate').value = data.appointmentDate ? 
+                    new Date(data.appointmentDate.toDate()).toISOString().slice(0, 16) : '';
+                document.getElementById('aptReason').value = data.reason || '';
+                document.getElementById('aptStatus').value = data.status || 'pending';
+            }
+        });
+    } else {
+        title.textContent = 'Add New Appointment';
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAppointmentModal() {
+    const modal = document.getElementById('appointmentModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    editingAppointmentId = null;
+    document.getElementById('appointmentForm').reset();
+}
+
+// Load Doctors for Dropdown
+async function loadDoctorsDropdown() {
+    const select = document.getElementById('aptDoctorId');
+    if (!select) return;
+    
+    try {
+        const doctorsSnap = await db.collection('doctors')
+            .where('hospitalId', '==', currentHospitalId)
+            .get();
+        
+        select.innerHTML = '<option value="">Select Doctor</option>';
+        doctorsSnap.forEach(doc => {
+            const doctor = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `Dr. ${doctor.doctorName} - ${doctor.specialization || 'General'}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading doctors dropdown:', error);
+    }
+}
+
+// Appointment Form Submission
+document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const doctorId = document.getElementById('aptDoctorId').value;
+    const dateStr = document.getElementById('aptDate').value;
+    
+    if (!doctorId) {
+        showNotification('Please select a doctor', 'error');
+        return;
+    }
+    
+    // Get doctor details
+    const doctorDoc = await db.collection('doctors').doc(doctorId).get();
+    const doctorName = doctorDoc.exists ? doctorDoc.data().doctorName : 'Unknown';
+    
+    const appointmentData = {
+        patientName: document.getElementById('aptPatientName').value.trim(),
+        doctorId: doctorId,
+        doctorName: doctorName,
+        appointmentDate: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
+        reason: document.getElementById('aptReason').value.trim(),
+        status: document.getElementById('aptStatus').value,
+        hospitalId: currentHospitalId,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        if (editingAppointmentId) {
+            await db.collection('appointments').doc(editingAppointmentId).update(appointmentData);
+            showNotification('Appointment updated successfully!', 'success');
+        } else {
+            appointmentData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('appointments').add(appointmentData);
+            showNotification('Appointment created successfully!', 'success');
+        }
+        
+        closeAppointmentModal();
+        await loadAppointments();
+        await loadStatistics();
+        
+    } catch (error) {
+        console.error('Error saving appointment:', error);
+        showNotification('Error: ' + error.message, 'error');
+    }
+});
+
+// Edit Appointment
+function editAppointment(appointmentId) {
+    openAppointmentModal(appointmentId);
+}
+
+// Delete Appointment
+async function deleteAppointment(appointmentId) {
+    if (!confirm('Are you sure you want to delete this appointment?')) return;
+    
+    try {
+        await db.collection('appointments').doc(appointmentId).delete();
+        showNotification('Appointment deleted successfully!', 'success');
+        await loadAppointments();
+        await loadStatistics();
+    } catch (error) {
+        console.error('Error deleting appointment:', error);
+        showNotification('Error deleting appointment', 'error');
+    }
+}
+
+window.openAppointmentModal = openAppointmentModal;
+window.closeAppointmentModal = closeAppointmentModal;
+window.editAppointment = editAppointment;
+window.deleteAppointment = deleteAppointment;
 
 // ==========================================
 // SETTINGS
