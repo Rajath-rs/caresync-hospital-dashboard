@@ -1,6 +1,6 @@
 // ==========================================
-// CARESYNC HOSPITAL REGISTRATION
-// Complete Registration System with HFR Validation
+// CARESYNC HOSPITAL REGISTRATION - FIXED
+// Registration page should be accessible even when logged in
 // ==========================================
 
 // Firebase Configuration
@@ -18,6 +18,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// ==========================================
+// ALLOW ACCESS TO REGISTRATION PAGE
+// Remove auto-redirect check - user should be able to access registration
+// ==========================================
+
+// NOTE: We removed the auth.onAuthStateChanged check here
+// This allows users to access the registration page even if logged in
+// If they're already logged in, they can create another account or logout first
 
 // ==========================================
 // REGISTRATION FORM HANDLER
@@ -94,6 +103,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     
     try {
         // ==========================================
+        // LOGOUT CURRENT USER IF LOGGED IN
+        // ==========================================
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            console.log('Logging out current user before creating new account...');
+            await auth.signOut();
+        }
+        
+        // ==========================================
         // CHECK IF HFR NUMBER ALREADY EXISTS
         // ==========================================
         const hfrCheck = await db.collection('hospitals')
@@ -145,7 +163,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             
             // Account Status
             status: 'active',
-            verified: false, // Can be verified by admin later
+            verified: false,
             
             // Timestamps
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -159,26 +177,10 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         // ==========================================
         await db.collection('beds').doc(user.uid).set({
             hospitalId: user.uid,
-            general: { 
-                total: 0, 
-                available: 0, 
-                occupied: 0 
-            },
-            icu: { 
-                total: 0, 
-                available: 0, 
-                occupied: 0 
-            },
-            emergency: { 
-                total: 0, 
-                available: 0, 
-                occupied: 0 
-            },
-            private: { 
-                total: 0, 
-                available: 0, 
-                occupied: 0 
-            },
+            general: { total: 0, available: 0, occupied: 0 },
+            icu: { total: 0, available: 0, occupied: 0 },
+            emergency: { total: 0, available: 0, occupied: 0 },
+            private: { total: 0, available: 0, occupied: 0 },
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
@@ -218,25 +220,12 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 });
 
 // ==========================================
-// CHECK IF USER IS ALREADY LOGGED IN
-// ==========================================
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        console.log('User already logged in, redirecting...');
-        window.location.replace('dashboard.html');
-    }
-});
-
-// ==========================================
 // REAL-TIME HFR NUMBER VALIDATION
 // ==========================================
 document.getElementById('hfrNumber').addEventListener('input', (e) => {
     const hfrNumber = e.target.value;
-    
-    // Remove non-numeric characters
     e.target.value = hfrNumber.replace(/\D/g, '');
     
-    // Show validation feedback
     if (e.target.value.length >= 12 && e.target.value.length <= 14) {
         e.target.style.borderColor = '#10B981';
     } else {
@@ -250,11 +239,8 @@ document.getElementById('hfrNumber').addEventListener('input', (e) => {
 ['phone', 'emergencyPhone'].forEach(fieldId => {
     document.getElementById(fieldId).addEventListener('input', (e) => {
         const phoneNumber = e.target.value;
-        
-        // Remove non-numeric characters
         e.target.value = phoneNumber.replace(/\D/g, '');
         
-        // Show validation feedback
         if (e.target.value.length === 10) {
             e.target.style.borderColor = '#10B981';
         } else {
@@ -268,11 +254,8 @@ document.getElementById('hfrNumber').addEventListener('input', (e) => {
 // ==========================================
 document.getElementById('pincode').addEventListener('input', (e) => {
     const pincode = e.target.value;
-    
-    // Remove non-numeric characters
     e.target.value = pincode.replace(/\D/g, '');
     
-    // Show validation feedback
     if (e.target.value.length === 6) {
         e.target.style.borderColor = '#10B981';
     } else {
