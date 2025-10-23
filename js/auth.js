@@ -1,59 +1,52 @@
-// Firebase Configuration
+// Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBnqbxn9N4J1lOOh7pDP7StcTfuM16mBTs",
-    authDomain: "caresync-2e5d4.firebaseapp.com",
-    projectId: "caresync-2e5d4",
-    storageBucket: "caresync-2e5d4.firebasestorage.app",
-    messagingSenderId: "588308758613",
-    appId: "1:588308758613:web:af393fd9804841cce294dc",
-    measurementId: "G-WQF201CXDY"
+    apiKey: "AIzaSyDCBK1yTGO82E4I4V8K-Kfse3SRYsIQ3i0",
+    authDomain: "caresync-f80c4.firebaseapp.com",
+    projectId: "caresync-f80c4",
+    storageBucket: "caresync-f80c4.firebasestorage.app",
+    messagingSenderId: "655842183730",
+    appId: "1:655842183730:web:bf3abe3833d6afbec42a12",
+    measurementId: "G-0D24PNR1RB"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Login Form Handler
+// Login form handler
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const spinner = document.getElementById('loadingSpinner');
-    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const statusDiv = document.getElementById('loginStatus');
+    
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
     
     try {
-        // Show loading
-        form.style.display = 'none';
-        spinner.classList.remove('hidden');
-        
-        // Sign in with Firebase
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+        statusDiv.className = 'status-message success';
+        statusDiv.textContent = 'Login successful! Redirecting...';
+        statusDiv.style.display = 'block';
         
-        // Verify user is a hospital
-        const hospitalDoc = await db.collection('hospitals').doc(user.uid).get();
-        
-        if (hospitalDoc.exists) {
-            // CHANGED: Use replace() instead of href to prevent back button
-            window.location.replace('dashboard.html');
-        } else {
-            throw new Error('Unauthorized: Hospital account not found');
-        }
-        
+        setTimeout(() => {
+            window.location.replace('/dashboard.html');  // ✅ FIXED
+        }, 1000);
     } catch (error) {
-        console.error('Login error:', error);
-        alert('Login failed: ' + error.message);
-        form.style.display = 'flex';
-        spinner.classList.add('hidden');
+        statusDiv.className = 'status-message error';
+        statusDiv.textContent = error.message;
+        statusDiv.style.display = 'block';
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login to Dashboard';
     }
 });
 
 // Check if user is already logged in
 auth.onAuthStateChanged((user) => {
     if (user && window.location.pathname.includes('index.html')) {
-        // CHANGED: Use replace() instead of href
-        window.location.replace('dashboard.html');
+        console.log('User already logged in, redirecting to dashboard');
+        window.location.replace('/dashboard.html');  // ✅ FIXED
     }
 });
