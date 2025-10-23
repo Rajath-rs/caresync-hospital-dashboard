@@ -1,4 +1,4 @@
-// Firebase Configuration - Using COMPAT library for simple HTML/CSS/JS
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBnqbxn9N4J1lOOh7pDP7StcTfuM16mBTs",
     authDomain: "caresync-2e5d4.firebaseapp.com",
@@ -9,7 +9,7 @@ const firebaseConfig = {
     measurementId: "G-WQF201CXDY"
 };
 
-// Initialize Firebase using compat library
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -36,8 +36,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const hospitalDoc = await db.collection('hospitals').doc(user.uid).get();
         
         if (hospitalDoc.exists) {
-            // Redirect to dashboard
-            window.location.href = 'dashboard.html';
+            // CHANGED: Use replace() instead of href to prevent back button
+            window.location.replace('dashboard.html');
         } else {
             throw new Error('Unauthorized: Hospital account not found');
         }
@@ -45,8 +45,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     } catch (error) {
         console.error('Login error:', error);
         alert('Login failed: ' + error.message);
-        
-        // Show form again
         form.style.display = 'flex';
         spinner.classList.add('hidden');
     }
@@ -55,6 +53,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 // Check if user is already logged in
 auth.onAuthStateChanged((user) => {
     if (user && window.location.pathname.includes('index.html')) {
-        window.location.href = 'dashboard.html';
+        // CHANGED: Use replace() instead of href
+        window.location.replace('dashboard.html');
     }
 });

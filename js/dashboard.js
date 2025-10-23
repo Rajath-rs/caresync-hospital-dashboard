@@ -1,7 +1,7 @@
-// ============================================
-// FIXED HOSPITAL DASHBOARD JAVASCRIPT
-// All controls now working properly
-// ============================================
+// ==========================================
+// CARESYNC HOSPITAL DASHBOARD - COMPLETE
+// All Management Controls Working
+// ==========================================
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -10,8 +10,7 @@ const firebaseConfig = {
     projectId: "caresync-2e5d4",
     storageBucket: "caresync-2e5d4.firebasestorage.app",
     messagingSenderId: "588308758613",
-    appId: "1:588308758613:web:af393fd9804841cce294dc",
-    measurementId: "G-WQF201CXDY"
+    appId: "1:588308758613:web:af393fd9804841cce294dc"
 };
 
 // Initialize Firebase
@@ -21,41 +20,53 @@ const db = firebase.firestore();
 
 let currentUser = null;
 let currentHospitalId = null;
+let currentBedCategory = null;
 
-// ============================================
+window.history.pushState(null, null, window.location.href);
+window.onpopstate = function() {
+    window.history.pushState(null, null, window.location.href);
+};
+
+// ==========================================
 // AUTHENTICATION
-// ============================================
-
+// ==========================================
 auth.onAuthStateChanged(async (user) => {
     if (!user) {
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
+
         return;
     }
-    
     currentUser = user;
     currentHospitalId = user.uid;
     
+    console.log('User authenticated:', currentHospitalId);
     await initializeDashboard();
 });
 
 async function initializeDashboard() {
     try {
+        showNotification('Loading dashboard...', 'info');
+        
         // Load hospital profile
         const hospitalDoc = await db.collection('hospitals').doc(currentHospitalId).get();
         if (hospitalDoc.exists) {
-            const hospitalData = hospitalDoc.data();
-            document.getElementById('hospitalName').textContent = hospitalData.hospitalName || 'Hospital';
+            document.getElementById('hospitalName').textContent = hospitalDoc.data().hospitalName || 'Hospital';
         }
         
-        // Initialize bed data if doesn't exist
+        // Initialize bed data
         await initializeBedData();
         
-        // Load all dashboard data
-        await loadDashboardData();
-        setupNavigationListeners();
+        // Load all data
+        await loadStatistics();
+        await loadBedManagement();
+        
+        // Setup navigation
+        setupNavigation();
+        
+        // Listen to emergency alerts
         listenToEmergencyAlerts();
         
-        console.log('Dashboard initialized successfully');
+        showNotification('Dashboard loaded successfully!', 'success');
         
     } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -63,47 +74,26 @@ async function initializeDashboard() {
     }
 }
 
-// ============================================
+// ==========================================
 // BED DATA INITIALIZATION
-// ============================================
-
+// ==========================================
 async function initializeBedData() {
     try {
-        const bedDoc = await db.collection('beds').doc(currentHospitalId).get();
+        const bedDocRef = db.collection('beds').doc(currentHospitalId);
+        const bedDoc = await bedDocRef.get();
         
         if (!bedDoc.exists) {
-            // Create default bed structure
+            console.log('Creating default bed data...');
             const defaultBeds = {
                 hospitalId: currentHospitalId,
-                general: { 
-                    total: 50, 
-                    available: 45, 
-                    occupied: 5,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                },
-                icu: { 
-                    total: 20, 
-                    available: 15, 
-                    occupied: 5,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                },
-                emergency: { 
-                    total: 30, 
-                    available: 28, 
-                    occupied: 2,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                },
-                private: { 
-                    total: 15, 
-                    available: 12, 
-                    occupied: 3,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                },
+                general: { total: 50, available: 45, occupied: 5 },
+                icu: { total: 20, available: 15, occupied: 5 },
+                emergency: { total: 30, available: 28, occupied: 2 },
+                private: { total: 15, available: 12, occupied: 3 },
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            
-            await db.collection('beds').doc(currentHospitalId).set(defaultBeds);
-            console.log('Default bed data initialized');
+            await bedDocRef.set(defaultBeds);
+            console.log('Default bed data created');
         }
     } catch (error) {
         console.error('Error initializing bed data:', error);
@@ -111,20 +101,17 @@ async function initializeBedData() {
     }
 }
 
-// ============================================
+// ==========================================
 // NAVIGATION
-// ============================================
-
-function setupNavigationListeners() {
-    const navItems = document.querySelectorAll('.nav-item');
-    
-    navItems.forEach(item => {
+// ==========================================
+function setupNavigation() {
+    document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const section = item.getAttribute('data-section');
             if (section) {
                 showSection(section);
-                navItems.forEach(nav => nav.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 item.classList.add('active');
             }
         });
@@ -132,58 +119,36 @@ function setupNavigationListeners() {
 }
 
 function showSection(sectionName) {
-    document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    const targetSection = document.getElementById(`${sectionName}Section`);
-    if (targetSection) {
-        targetSection.classList.add('active');
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    const section = document.getElementById(sectionName + 'Section');
+    if (section) {
+        section.classList.add('active');
         
+        // Load section data
         switch(sectionName) {
-            case 'beds':
-                loadBedManagement();
-                break;
-            case 'doctors':
-                loadDoctorManagement();
-                break;
-            case 'appointments':
-                loadAppointments();
-                break;
-            case 'ambulance':
-                loadAmbulanceFleet();
-                break;
-            case 'settings':
-                loadSettings();
-                break;
+            case 'beds': loadBedManagement(); break;
+            case 'doctors': loadDoctors(); break;
+            case 'appointments': loadAppointments(); break;
+            case 'ambulance': loadAmbulances(); break;
+            case 'settings': loadSettings(); break;
         }
     }
 }
 
-// ============================================
-// DASHBOARD DATA LOADING
-// ============================================
+window.showSection = showSection;
 
-async function loadDashboardData() {
-    try {
-        await Promise.all([
-            loadStatistics(),
-            loadBedManagement()
-        ]);
-    } catch (error) {
-        console.error('Error loading dashboard data:', error);
-    }
-}
-
+// ==========================================
+// STATISTICS
+// ==========================================
 async function loadStatistics() {
     try {
-        // Load doctors count
+        // Doctors
         const doctorsSnap = await db.collection('doctors')
             .where('hospitalId', '==', currentHospitalId)
             .get();
         document.getElementById('totalDoctors').textContent = doctorsSnap.size;
         
-        // Load patients from appointments
+        // Patients
         const appointmentsSnap = await db.collection('appointments')
             .where('hospitalId', '==', currentHospitalId)
             .get();
@@ -208,10 +173,9 @@ async function loadStatistics() {
     }
 }
 
-// ============================================
-// BED MANAGEMENT - FIXED
-// ============================================
-
+// ==========================================
+// BED MANAGEMENT
+// ==========================================
 async function loadBedManagement() {
     try {
         const bedDoc = await db.collection('beds').doc(currentHospitalId).get();
@@ -224,7 +188,7 @@ async function loadBedManagement() {
             await loadBedManagement();
         }
     } catch (error) {
-        console.error('Error loading bed management:', error);
+        console.error('Error loading beds:', error);
         showNotification('Error loading bed data', 'error');
     }
 }
@@ -247,111 +211,81 @@ function updateBedDisplay(bedData) {
         
         if (progressElem && data.total > 0) {
             const occupancyPercent = (data.occupied / data.total) * 100;
-            progressElem.style.width = `${occupancyPercent}%`;
+            progressElem.style.width = occupancyPercent + '%';
         }
         
         totalAvailable += data.available;
     });
     
     const availableBedsElem = document.getElementById('availableBeds');
-    if (availableBedsElem) {
-        availableBedsElem.textContent = totalAvailable;
-    }
+    if (availableBedsElem) availableBedsElem.textContent = totalAvailable;
 }
 
-// FIXED: Bed Update Function
-async function updateBeds(category, change) {
+// Bed Modal Functions
+function openBedModal(category) {
+    currentBedCategory = category;
+    const modal = document.getElementById('bedModal');
+    const title = document.getElementById('bedModalTitle');
+    
+    title.textContent = `Manage ${category.charAt(0).toUpperCase() + category.slice(1)} Beds`;
+    
+    // Load current values
+    db.collection('beds').doc(currentHospitalId).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data()[category];
+            document.getElementById('bedTotalInput').value = data.total || 0;
+            document.getElementById('bedAvailableInput').value = data.available || 0;
+        }
+    });
+    
+    modal.classList.add('active');
+}
+
+function closeBedModal() {
+    document.getElementById('bedModal').classList.remove('active');
+    currentBedCategory = null;
+}
+
+window.openBedModal = openBedModal;
+window.closeBedModal = closeBedModal;
+
+// Bed Form Submission
+document.getElementById('bedForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!currentBedCategory) return;
+    
+    const total = parseInt(document.getElementById('bedTotalInput').value);
+    const available = parseInt(document.getElementById('bedAvailableInput').value);
+    
+    if (available > total) {
+        showNotification('Available beds cannot exceed total beds', 'error');
+        return;
+    }
+    
+    const occupied = total - available;
+    
     try {
-        console.log(`Updating ${category} beds by ${change}`);
-        
-        const bedDocRef = db.collection('beds').doc(currentHospitalId);
-        const bedDoc = await bedDocRef.get();
-        
-        if (!bedDoc.exists) {
-            showNotification('Bed data not found. Initializing...', 'warning');
-            await initializeBedData();
-            return;
-        }
-        
-        const bedData = bedDoc.data();
-        const currentData = bedData[category];
-        
-        if (!currentData) {
-            showNotification('Invalid bed category', 'error');
-            return;
-        }
-        
-        // Calculate new values
-        let newAvailable = currentData.available + change;
-        
-        // Validate bounds
-        if (newAvailable < 0) {
-            showNotification('Available beds cannot be negative', 'error');
-            return;
-        }
-        
-        if (newAvailable > currentData.total) {
-            showNotification('Available beds cannot exceed total beds', 'error');
-            return;
-        }
-        
-        const newOccupied = currentData.total - newAvailable;
-        
-        // Update Firebase
         const updateData = {};
-        updateData[`${category}.available`] = newAvailable;
-        updateData[`${category}.occupied`] = newOccupied;
-        updateData[`${category}.lastUpdated`] = firebase.firestore.FieldValue.serverTimestamp();
+        updateData[`${currentBedCategory}.total`] = total;
+        updateData[`${currentBedCategory}.available`] = available;
+        updateData[`${currentBedCategory}.occupied`] = occupied;
         
-        await bedDocRef.update(updateData);
+        await db.collection('beds').doc(currentHospitalId).update(updateData);
         
-        // Update display
-        bedData[category] = {
-            ...currentData,
-            available: newAvailable,
-            occupied: newOccupied
-        };
-        updateBedDisplay(bedData);
-        
-        showNotification(`${category.toUpperCase()} beds updated successfully`, 'success');
+        showNotification('Bed data updated successfully!', 'success');
+        closeBedModal();
+        await loadBedManagement();
         
     } catch (error) {
         console.error('Error updating beds:', error);
         showNotification('Error: ' + error.message, 'error');
     }
-}
+});
 
-// Function to add total beds
-async function addTotalBeds(category) {
-    const newTotal = prompt(`Enter new total for ${category} beds:`, '0');
-    if (!newTotal) return;
-    
-    const total = parseInt(newTotal);
-    if (isNaN(total) || total < 0) {
-        showNotification('Please enter a valid number', 'error');
-        return;
-    }
-    
-    try {
-        const bedDocRef = db.collection('beds').doc(currentHospitalId);
-        const updateData = {};
-        updateData[`${category}.total`] = total;
-        updateData[`${category}.available`] = total;
-        updateData[`${category}.occupied`] = 0;
-        
-        await bedDocRef.update(updateData);
-        await loadBedManagement();
-        showNotification('Total beds updated', 'success');
-    } catch (error) {
-        console.error('Error adding total beds:', error);
-        showNotification('Error updating total beds', 'error');
-    }
-}
-
-// ============================================
+// ==========================================
 // EMERGENCY ALERTS
-// ============================================
-
+// ==========================================
 function listenToEmergencyAlerts() {
     db.collection('emergencyAlerts')
         .where('status', '==', 'active')
@@ -381,11 +315,14 @@ function listenToEmergencyAlerts() {
             snapshot.forEach((doc, index) => {
                 const alert = doc.data();
                 const alertCard = createAlertCard(doc.id, alert);
+                
                 if (alertsContainer) alertsContainer.appendChild(alertCard.cloneNode(true));
                 if (index < 3 && recentAlertsContainer) {
-                    recentAlertsContainer.appendChild(alertCard);
+                    recentAlertsContainer.appendChild(alertCard.cloneNode(true));
                 }
             });
+        }, (error) => {
+            console.error('Error listening to alerts:', error);
         });
 }
 
@@ -402,14 +339,14 @@ function createAlertCard(alertId, alert) {
         <div class="alert-info">
             <h4>${alert.patientName || 'Emergency Alert'}</h4>
             <p><i class="fas fa-phone"></i> ${alert.patientPhone || 'N/A'}</p>
-            <p><i class="fas fa-map-marker-alt"></i> ${alert.location ? `Lat: ${alert.location.latitude.toFixed(4)}, Lon: ${alert.location.longitude.toFixed(4)}` : 'Location unavailable'}</p>
+            <p><i class="fas fa-map-marker-alt"></i> ${alert.location ? 
+                `Lat: ${alert.location.latitude.toFixed(4)}, Lon: ${alert.location.longitude.toFixed(4)}` : 
+                'Location unavailable'}</p>
             <span class="alert-time">${timeAgo}</span>
         </div>
-        <div class="alert-actions">
-            <button class="btn-respond" onclick="respondToEmergency('${alertId}', ${alert.location?.latitude}, ${alert.location?.longitude})">
-                <i class="fas fa-route"></i> Navigate
-            </button>
-        </div>
+        <button class="btn-respond" onclick="respondToEmergency('${alertId}', ${alert.location?.latitude}, ${alert.location?.longitude})">
+            <i class="fas fa-route"></i> Navigate
+        </button>
     `;
     
     return card;
@@ -423,23 +360,23 @@ function respondToEmergency(alertId, lat, lon) {
             status: 'responded',
             respondedBy: currentHospitalId,
             respondedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        }).catch(err => console.error('Error updating alert:', err));
     } else {
         showNotification('Location not available', 'error');
     }
 }
 
-// ============================================
-// AMBULANCE MANAGEMENT - COMPLETE
-// ============================================
+window.respondToEmergency = respondToEmergency;
 
-async function loadAmbulanceFleet() {
+// ==========================================
+// AMBULANCE MANAGEMENT
+// ==========================================
+async function loadAmbulances() {
     try {
         const ambulanceSnap = await db.collection('ambulances')
             .where('hospitalId', '==', currentHospitalId)
             .get();
         
-        // Update stats
         let available = 0, active = 0, maintenance = 0;
         
         ambulanceSnap.forEach(doc => {
@@ -454,15 +391,14 @@ async function loadAmbulanceFleet() {
         document.getElementById('activeAmbulances').textContent = active;
         document.getElementById('maintenanceAmbulances').textContent = maintenance;
         
-        // Display ambulance list
         const ambulanceList = document.getElementById('ambulanceList');
         
         if (ambulanceSnap.empty) {
             ambulanceList.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
+                <div class="empty-state">
                     <i class="fas fa-ambulance"></i>
                     <p>No ambulances registered</p>
-                    <button class="btn-primary" onclick="openAddAmbulanceModal()">
+                    <button class="btn-primary" onclick="openAmbulanceModal()">
                         <i class="fas fa-plus"></i> Add First Ambulance
                     </button>
                 </div>
@@ -479,7 +415,7 @@ async function loadAmbulanceFleet() {
         });
         
     } catch (error) {
-        console.error('Error loading ambulance fleet:', error);
+        console.error('Error loading ambulances:', error);
         showNotification('Error loading ambulances', 'error');
     }
 }
@@ -519,8 +455,8 @@ function createAmbulanceCard(id, ambulance) {
             </div>
         </div>
         <div class="ambulance-actions">
-            <button class="btn-track" onclick="changeAmbulanceStatus('${id}')">
-                <i class="fas fa-sync"></i> Change Status
+            <button class="btn-track" onclick="updateAmbulanceStatus('${id}')">
+                <i class="fas fa-sync"></i> Update Status
             </button>
             <button class="btn-update" onclick="deleteAmbulance('${id}')">
                 <i class="fas fa-trash"></i> Delete
@@ -531,51 +467,63 @@ function createAmbulanceCard(id, ambulance) {
     return card;
 }
 
-function openAddAmbulanceModal() {
-    const vehicleNumber = prompt('Enter Vehicle Number (e.g., KA-01-AB-1234):');
-    if (!vehicleNumber || vehicleNumber.trim() === '') {
-        showNotification('Vehicle number is required', 'error');
-        return;
-    }
-    
-    const driverName = prompt('Enter Driver Name:');
-    const driverPhone = prompt('Enter Driver Phone Number:');
-    const type = prompt('Enter Ambulance Type (Basic/Advanced/ICU):', 'Basic');
-    
-    db.collection('ambulances').add({
-        hospitalId: currentHospitalId,
-        vehicleNumber: vehicleNumber.trim(),
-        driverName: driverName?.trim() || '',
-        driverPhone: driverPhone?.trim() || '',
-        type: type?.trim() || 'Basic',
-        status: 'available',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        showNotification('Ambulance added successfully!', 'success');
-        loadAmbulanceFleet();
-    }).catch(error => {
-        console.error('Error adding ambulance:', error);
-        showNotification('Error adding ambulance: ' + error.message, 'error');
-    });
+function openAmbulanceModal() {
+    document.getElementById('ambulanceModal').classList.add('active');
 }
 
-function changeAmbulanceStatus(ambulanceId) {
-    const newStatus = prompt('Enter new status (available/on-duty/maintenance):');
-    if (!newStatus) return;
+function closeAmbulanceModal() {
+    document.getElementById('ambulanceModal').classList.remove('active');
+    document.getElementById('ambulanceForm').reset();
+}
+
+window.openAmbulanceModal = openAmbulanceModal;
+window.closeAmbulanceModal = closeAmbulanceModal;
+
+// Ambulance Form Submission
+document.getElementById('ambulanceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const vehicleNumber = document.getElementById('vehicleNumber').value;
+    const driverName = document.getElementById('driverName').value;
+    const driverPhone = document.getElementById('driverPhone').value;
+    const type = document.getElementById('ambulanceType').value;
+    
+    try {
+        await db.collection('ambulances').add({
+            hospitalId: currentHospitalId,
+            vehicleNumber: vehicleNumber,
+            driverName: driverName,
+            driverPhone: driverPhone,
+            type: type,
+            status: 'available',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification('Ambulance added successfully!', 'success');
+        closeAmbulanceModal();
+        await loadAmbulances();
+        
+    } catch (error) {
+        console.error('Error adding ambulance:', error);
+        showNotification('Error: ' + error.message, 'error');
+    }
+});
+
+function updateAmbulanceStatus(ambulanceId) {
+    const newStatus = prompt('Enter new status:\n1. available\n2. on-duty\n3. maintenance');
     
     const validStatuses = ['available', 'on-duty', 'maintenance'];
-    if (!validStatuses.includes(newStatus.toLowerCase())) {
+    if (!newStatus || !validStatuses.includes(newStatus.toLowerCase())) {
         showNotification('Invalid status. Use: available, on-duty, or maintenance', 'error');
         return;
     }
     
     db.collection('ambulances').doc(ambulanceId).update({
         status: newStatus.toLowerCase(),
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        showNotification('Ambulance status updated!', 'success');
-        loadAmbulanceFleet();
+        showNotification('Status updated!', 'success');
+        loadAmbulances();
     }).catch(error => {
         console.error('Error updating status:', error);
         showNotification('Error updating status', 'error');
@@ -586,23 +534,25 @@ function deleteAmbulance(ambulanceId) {
     if (!confirm('Are you sure you want to delete this ambulance?')) return;
     
     db.collection('ambulances').doc(ambulanceId).delete().then(() => {
-        showNotification('Ambulance deleted successfully', 'success');
-        loadAmbulanceFleet();
+        showNotification('Ambulance deleted', 'success');
+        loadAmbulances();
     }).catch(error => {
         console.error('Error deleting ambulance:', error);
         showNotification('Error deleting ambulance', 'error');
     });
 }
 
-// ============================================
-// DOCTOR MANAGEMENT
-// ============================================
+window.updateAmbulanceStatus = updateAmbulanceStatus;
+window.deleteAmbulance = deleteAmbulance;
 
-async function loadDoctorManagement() {
+// ==========================================
+// DOCTORS
+// ==========================================
+async function loadDoctors() {
     const tbody = document.getElementById('doctorsTableBody');
     if (!tbody) return;
     
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading doctors...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
     
     try {
         const doctorsSnap = await db.collection('doctors')
@@ -610,7 +560,7 @@ async function loadDoctorManagement() {
             .get();
         
         if (doctorsSnap.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No doctors found. Doctors will appear here when they register.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No doctors found</td></tr>';
             return;
         }
         
@@ -620,41 +570,28 @@ async function loadDoctorManagement() {
             const doctor = doc.data();
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.doctorName || 'Doctor')}&background=4F46E5&color=fff" 
-                             style="width: 40px; height: 40px; border-radius: 50%;" alt="Doctor">
-                        <strong>${doctor.doctorName || 'N/A'}</strong>
-                    </div>
-                </td>
+                <td>${doctor.doctorName || 'N/A'}</td>
                 <td>${doctor.specialization || 'General'}</td>
                 <td>${doctor.phone || doctor.email || 'N/A'}</td>
                 <td><span class="status-badge available">Active</span></td>
-                <td>0</td>
-                <td>
-                    <button class="table-action-btn view">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
             `;
             tbody.appendChild(row);
         });
         
     } catch (error) {
         console.error('Error loading doctors:', error);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading doctors</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading doctors</td></tr>';
     }
 }
 
-// ============================================
+// ==========================================
 // APPOINTMENTS
-// ============================================
-
-async function loadAppointments(filter = 'all') {
+// ==========================================
+async function loadAppointments() {
     const tbody = document.getElementById('appointmentsTableBody');
     if (!tbody) return;
     
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading appointments...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
     
     try {
         const appointmentsSnap = await db.collection('appointments')
@@ -664,7 +601,7 @@ async function loadAppointments(filter = 'all') {
             .get();
         
         if (appointmentsSnap.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No appointments found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No appointments found</td></tr>';
             return;
         }
         
@@ -673,40 +610,29 @@ async function loadAppointments(filter = 'all') {
         appointmentsSnap.forEach(doc => {
             const apt = doc.data();
             const date = apt.appointmentDate?.toDate();
-            const dateStr = date ? date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
+            const dateStr = date ? 
+                date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+                'N/A';
             
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${apt.patientName || 'N/A'}</td>
                 <td>Dr. ${apt.doctorName || 'N/A'}</td>
                 <td>${dateStr}</td>
-                <td>${apt.department || 'General'}</td>
-                <td><span class="status-badge status-confirmed">${apt.status || 'Confirmed'}</span></td>
-                <td>
-                    <button class="table-action-btn view">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                </td>
+                <td><span class="status-badge available">${apt.status || 'Confirmed'}</span></td>
             `;
             tbody.appendChild(row);
         });
         
     } catch (error) {
         console.error('Error loading appointments:', error);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading appointments</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading appointments</td></tr>';
     }
 }
 
-function filterAppointments(filter) {
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    loadAppointments(filter);
-}
-
-// ============================================
+// ==========================================
 // SETTINGS
-// ============================================
-
+// ==========================================
 async function loadSettings() {
     try {
         const hospitalDoc = await db.collection('hospitals').doc(currentHospitalId).get();
@@ -719,48 +645,52 @@ async function loadSettings() {
             document.getElementById('emergencyPhone').value = data.emergencyPhone || '';
         }
         
-        document.getElementById('hospitalInfoForm').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            try {
-                await db.collection('hospitals').doc(currentHospitalId).update({
-                    hospitalName: document.getElementById('hospitalNameInput').value,
-                    address: document.getElementById('hospitalAddress').value,
-                    phone: document.getElementById('hospitalPhone').value,
-                    emergencyPhone: document.getElementById('emergencyPhone').value
-                });
-                
-                showNotification('Settings saved successfully!', 'success');
-                document.getElementById('hospitalName').textContent = document.getElementById('hospitalNameInput').value;
-                
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                showNotification('Error saving settings', 'error');
-            }
-        };
-        
     } catch (error) {
         console.error('Error loading settings:', error);
     }
 }
 
-// ============================================
-// LOGOUT
-// ============================================
-
-document.getElementById('logoutBtn').addEventListener('click', async () => {
+document.getElementById('hospitalInfoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
     try {
-        await auth.signOut();
-        window.location.href = 'index.html';
+        await db.collection('hospitals').doc(currentHospitalId).update({
+            hospitalName: document.getElementById('hospitalNameInput').value,
+            address: document.getElementById('hospitalAddress').value,
+            phone: document.getElementById('hospitalPhone').value,
+            emergencyPhone: document.getElementById('emergencyPhone').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification('Settings saved successfully!', 'success');
+        document.getElementById('hospitalName').textContent = document.getElementById('hospitalNameInput').value;
+        
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('Error saving settings:', error);
+        showNotification('Error saving settings', 'error');
     }
 });
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
+// ==========================================
+// LOGOUT - FIXED
+// ==========================================
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+        await auth.signOut();
+        
+        // Clear browser history and redirect
+        window.location.replace('index.html');
+        
+    } catch (error) {
+        console.error('Logout error:', error);
+        showNotification('Error logging out', 'error');
+    }
+});
 
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
 function getTimeAgo(date) {
     if (!date) return 'Just now';
     const seconds = Math.floor((new Date() - date) / 1000);
@@ -791,6 +721,7 @@ function showNotification(message, type = 'info') {
         z-index: 10000;
         animation: slideInRight 0.3s ease;
         max-width: 400px;
+        font-weight: 600;
     `;
     notification.textContent = message;
     document.body.appendChild(notification);
@@ -801,14 +732,18 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
-// Make functions globally accessible
-window.updateBeds = updateBeds;
-window.addTotalBeds = addTotalBeds;
-window.openAddAmbulanceModal = openAddAmbulanceModal;
-window.changeAmbulanceStatus = changeAmbulanceStatus;
-window.deleteAmbulance = deleteAmbulance;
-window.respondToEmergency = respondToEmergency;
-window.showSection = showSection;
-window.filterAppointments = filterAppointments;
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 
 console.log('Dashboard script loaded successfully');
