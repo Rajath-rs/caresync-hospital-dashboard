@@ -1,12 +1,12 @@
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDCBK1yTGO82E4I4V8K-Kfse3SRYsIQ3i0",
-    authDomain: "caresync-f80c4.firebaseapp.com",
-    projectId: "caresync-f80c4",
-    storageBucket: "caresync-f80c4.firebasestorage.app",
-    messagingSenderId: "655842183730",
-    appId: "1:655842183730:web:bf3abe3833d6afbec42a12",
-    measurementId: "G-0D24PNR1RB"
+  apiKey: "AIzaSyBnqbxn9N4J1lOOh7pDP7StcTfuM16mBTs",
+  authDomain: "caresync-2e5d4.firebaseapp.com",
+  projectId: "caresync-2e5d4",
+  storageBucket: "caresync-2e5d4.firebasestorage.app",
+  messagingSenderId: "588308758613",
+  appId: "1:588308758613:web:af393fd9804841cce294dc",
+  measurementId: "G-WQF201CXDY"
 };
 
 firebase.initializeApp(firebaseConfig);
