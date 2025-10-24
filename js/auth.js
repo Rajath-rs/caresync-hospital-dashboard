@@ -19,57 +19,68 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const loginBtn = document.getElementById('loginBtn');
-    const statusDiv = document.getElementById('loginStatus');
+    const loginBtn = document.querySelector('.btn-login');
+    const loadingSpinner = document.getElementById('loadingSpinner');
     
+    // Show loading
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+    if (loadingSpinner) {
+        loadingSpinner.classList.remove('hidden');
+    }
     
     try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('✅ Login successful:', userCredential.user.email);
         
-        statusDiv.className = 'status-message success';
-        statusDiv.textContent = '✅ Login successful! Redirecting...';
-        statusDiv.style.display = 'block';
-        
-        // ✅ FIXED: Multiple redirect methods for mobile compatibility
+        // ✅ MOBILE-FRIENDLY REDIRECT - Triple fallback system
         setTimeout(() => {
-            // Try window.location.href first (most compatible)
+            console.log('Redirecting to dashboard...');
+            
+            // Method 1: Most compatible (works on 99% of browsers)
             window.location.href = 'dashboard.html';
             
-            // Fallback methods
+            // Method 2: Fallback for older browsers
             setTimeout(() => {
-                window.location.assign('dashboard.html');
+                if (window.location.pathname.includes('index.html')) {
+                    window.location.assign('dashboard.html');
+                }
             }, 500);
             
+            // Method 3: Last resort fallback
             setTimeout(() => {
-                window.location.replace('dashboard.html');
+                if (window.location.pathname.includes('index.html')) {
+                    window.location.replace('dashboard.html');
+                }
             }, 1000);
         }, 800);
         
     } catch (error) {
-        console.error('Login error:', error);
-        statusDiv.className = 'status-message error';
-        statusDiv.textContent = '❌ ' + error.message;
-        statusDiv.style.display = 'block';
+        console.error('❌ Login error:', error);
         
+        // Show error
         loginBtn.disabled = false;
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login to Dashboard';
+        if (loadingSpinner) {
+            loadingSpinner.classList.add('hidden');
+        }
+        
+        alert('Login failed: ' + error.message);
     }
 });
 
 // Check if user is already logged in
 auth.onAuthStateChanged((user) => {
     if (user) {
-        console.log('User logged in:', user.email);
+        console.log('✅ User logged in:', user.email);
         
         // If on login page, redirect to dashboard
         const currentPage = window.location.pathname;
         if (currentPage.includes('index.html') || currentPage === '/') {
-            console.log('Redirecting to dashboard...');
+            console.log('Auto-redirecting to dashboard...');
             window.location.href = 'dashboard.html';
         }
     } else {
-        console.log('No user logged in');
+        console.log('ℹ️ No user logged in');
     }
 });
