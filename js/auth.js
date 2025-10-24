@@ -32,7 +32,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         statusDiv.style.display = 'block';
         
         setTimeout(() => {
-            window.location.replace('/dashboard.html');  // ✅ FIXED
+            window.location.replace('dashboard.html');  // ✅ FIXED
         }, 1000);
     } catch (error) {
         statusDiv.className = 'status-message error';
@@ -47,6 +47,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 auth.onAuthStateChanged((user) => {
     if (user && window.location.pathname.includes('index.html')) {
         console.log('User already logged in, redirecting to dashboard');
-        window.location.replace('/dashboard.html');  // ✅ FIXED
+        window.location.replace('dashboard.html');  // ✅ FIXED
     }
 });

@@ -193,7 +193,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         
         // Wait 2 seconds to show success message
         setTimeout(() => {
-            window.location.replace('/dashboard.html');  
+            window.location.replace('dashboard.html');  
         }, 2000);
         
     } catch (error) {
