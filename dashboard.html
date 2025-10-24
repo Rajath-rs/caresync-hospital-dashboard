@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareSync - Hospital Dashboard</title>
     <link rel="stylesheet" href="https://caresync-hospital-dashboard-mvm3.vercel.app/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+
+<body class="dashboard-page" id="dashboardPage">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo">
             <i class="fas fa-hospital"></i>
             <span>CareSync</span>
         </div>
-        
+
         <nav class="nav-menu">
             <a href="#overview" class="nav-link active" onclick="showSection('overview')">
                 <i class="fas fa-tachometer-alt"></i>
@@ -45,7 +48,7 @@
                 <span>Settings</span>
             </a>
         </nav>
-        
+
         <div class="sidebar-footer">
             <button class="btn-logout" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>
@@ -59,19 +62,19 @@
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="top-bar-left">
-                <button class="menu-toggle" id="menuToggle">
+                <button class="menu-toggle" id="menuToggle" title="Toggle menu">
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Hospital Dashboard</h2>
             </div>
             <div class="top-bar-right">
-                <div class="search-box">
+                <div class="search-box" role="search">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search patients, doctors, appointments...">
+                    <input id="globalSearch" type="text" placeholder="Search patients, doctors, appointments...">
                 </div>
-                <div class="notifications">
+                <div class="notifications icon-btn" id="notificationsBtn" title="Notifications">
                     <i class="fas fa-bell"></i>
-                    <span class="badge">3</span>
+                    <span class="badge" id="notifCount">3</span>
                 </div>
                 <div class="user-profile">
                     <div class="user-avatar">H</div>
@@ -434,7 +437,8 @@
                 </div>
                 <div class="form-group">
                     <label for="driverPhone"><i class="fas fa-phone"></i> Driver Phone *</label>
-                    <input type="tel" id="driverPhone" required placeholder="10-digit phone number" pattern="[0-9]{10}" maxlength="10">
+                    <input type="tel" id="driverPhone" required placeholder="10-digit phone number" pattern="[0-9]{10}"
+                        maxlength="10">
                 </div>
                 <div class="form-group">
                     <label for="ambulanceType"><i class="fas fa-ambulance"></i> Type</label>
@@ -459,7 +463,7 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeDoctorModal()">&times;</span>
             <h2 id="doctorModalTitle">Add New Doctor</h2>
-            
+
             <form id="doctorForm">
                 <div class="form-group">
                     <label for="doctorName"><i class="fas fa-user-md"></i> Doctor Name *</label>
@@ -473,7 +477,8 @@
 
                 <div class="form-group">
                     <label for="doctorPhone"><i class="fas fa-phone"></i> Phone Number *</label>
-                    <input type="tel" id="doctorPhone" required placeholder="10-digit phone number" pattern="[0-9]{10}" maxlength="10">
+                    <input type="tel" id="doctorPhone" required placeholder="10-digit phone number" pattern="[0-9]{10}"
+                        maxlength="10">
                 </div>
 
                 <div class="form-group">
@@ -501,7 +506,7 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeAppointmentModal()">&times;</span>
             <h2 id="appointmentModalTitle">Add New Appointment</h2>
-            
+
             <form id="appointmentForm">
                 <div class="form-group">
                     <label for="aptPatientName"><i class="fas fa-user"></i> Patient Name *</label>
@@ -549,9 +554,200 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- Dashboard Script -->
+
+    <!-- Dashboard Script (external) -->
     <script src="/js/dashboard.js"></script>
+
+    <!-- Inline connectors & small UI script -->
+    <script>
+        // Minimal connector script: toggles sidebar, switches sections, modals, ripple and simple form handlers.
+        (function(){
+            const dashboardPage = document.getElementById('dashboardPage');
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menuToggle');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.content-section');
+
+            function showSection(id){
+                sections.forEach(s => s.classList.remove('active'));
+                const el = document.getElementById(id);
+                if(el) el.classList.add('active');
+                navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+            }
+            window.showSection = showSection;
+
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                dashboardPage.classList.toggle('collapsed');
+            });
+
+            navLinks.forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = a.getAttribute('href').replace('#','');
+                    showSection(target);
+                });
+            });
+
+            // Modal helpers
+            function openModal(id){ document.getElementById(id).classList.add('active'); }
+            function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+            window.openDoctorModal = () => openModal('doctorModal');
+            window.closeDoctorModal = () => closeModal('doctorModal');
+            window.openBedModal = (type) => {
+                document.getElementById('bedModalTitle').textContent = 'Manage ' + (type || 'Beds');
+                document.getElementById('bedModal').classList.add('active');
+                document.getElementById('bedModal').dataset.type = type || '';
+            };
+            window.closeBedModal = () => closeModal('bedModal');
+            window.openAmbulanceModal = () => openModal('ambulanceModal');
+            window.closeAmbulanceModal = () => closeModal('ambulanceModal');
+            window.openAppointmentModal = () => openModal('appointmentModal');
+            window.closeAppointmentModal = () => closeModal('appointmentModal');
+
+            // Ripple effect for buttons
+            document.addEventListener('click', function(e){
+                const btn = e.target.closest('.btn-primary, .action-btn, .table-action-btn, .btn-manage');
+                if(!btn) return;
+                const rect = btn.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.left = (e.clientX - rect.left) + 'px';
+                ripple.style.top = (e.clientY - rect.top) + 'px';
+                btn.appendChild(ripple);
+                setTimeout(()=> ripple.remove(), 650);
+            });
+
+            // Simple form handlers to update UI
+            const doctorsTable = document.getElementById('doctorsTableBody');
+            const doctorForm = document.getElementById('doctorForm');
+            if(doctorForm){
+                doctorForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const name = document.getElementById('doctorName').value.trim();
+                    const spec = document.getElementById('doctorSpecialization').value.trim();
+                    const phone = document.getElementById('doctorPhone').value.trim();
+                    const hfr = document.getElementById('doctorHFR').value.trim();
+                    if(!name || !spec) return;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>'+escapeHtml(name)+'</td><td>'+escapeHtml(spec)+'</td><td>'+escapeHtml(phone)+'</td><td>'+escapeHtml(hfr)+'</td><td><button class="table-action-btn edit">Edit</button><button class="table-action-btn delete">Delete</button></td>';
+                    // replace "Loading..." row if present
+                    if(doctorsTable.children.length === 1 && doctorsTable.children[0].textContent.includes('Loading')) doctorsTable.innerHTML = '';
+                    doctorsTable.appendChild(tr);
+                    // update doctor count
+                    const totalDoctorsEl = document.getElementById('totalDoctors');
+                    totalDoctorsEl.textContent = parseInt(totalDoctorsEl.textContent || '0') + 1;
+                    closeModal('doctorModal');
+                    doctorForm.reset();
+                });
+            }
+
+            const ambulanceList = document.getElementById('ambulanceList');
+            const ambulanceForm = document.getElementById('ambulanceForm');
+            if(ambulanceForm){
+                ambulanceForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const vehicle = document.getElementById('vehicleNumber').value.trim();
+                    const driver = document.getElementById('driverName').value.trim();
+                    const phone = document.getElementById('driverPhone').value.trim();
+                    if(!vehicle || !driver) return;
+                    const card = document.createElement('div');
+                    card.className = 'ambulance-card';
+                    card.innerHTML = '<div class="ambulance-header"><div class="ambulance-number"><i class="fas fa-ambulance"></i> '+escapeHtml(vehicle)+'</div><div class="ambulance-status available">Available</div></div><div class="ambulance-details"><div class="ambulance-detail-item"><label>Driver</label><span>'+escapeHtml(driver)+'</span></div><div class="ambulance-detail-item"><label>Contact</label><span>'+escapeHtml(phone)+'</span></div></div><div class="ambulance-actions"><button class="btn-track">Track</button><button class="btn-update">Update</button></div>';
+                    if(ambulanceList.children.length ===1 && ambulanceList.children[0].textContent.includes('No ambulances')) ambulanceList.innerHTML = '';
+                    ambulanceList.prepend(card);
+                    // update stats
+                    document.getElementById('ambulanceTotal').textContent = (parseInt(document.getElementById('ambulanceTotal').textContent||'0')+1);
+                    document.getElementById('ambulanceAvailable').textContent = (parseInt(document.getElementById('ambulanceAvailable').textContent||'0')+1);
+                    closeModal('ambulanceModal');
+                    ambulanceForm.reset();
+                });
+            }
+
+            // Bed form update simple
+            const bedForm = document.getElementById('bedForm');
+            if(bedForm){
+                bedForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const total = parseInt(document.getElementById('bedTotalInput').value || '0');
+                    const available = parseInt(document.getElementById('bedAvailableInput').value || '0');
+                    const type = document.getElementById('bedModal').dataset.type || 'general';
+                    const totalEl = document.getElementById(type+'-total');
+                    const availableEl = document.getElementById(type+'-available');
+                    const occupiedEl = document.getElementById(type+'-occupied');
+                    if(totalEl) totalEl.textContent = total;
+                    if(availableEl) availableEl.textContent = available;
+                    if(occupiedEl) occupiedEl.textContent = Math.max(0, total - available);
+                    // update overview available beds sum
+                    const sum = ['general','icu','emergency','private'].reduce((acc,k)=> {
+                        const v = parseInt(document.getElementById(k+'-available')?.textContent||'0'); return acc+v;
+                    },0);
+                    document.getElementById('availableBeds').textContent = sum;
+                    closeModal('bedModal');
+                });
+            }
+
+            // Appointment form - simple append
+            const aptForm = document.getElementById('appointmentForm');
+            const aptBody = document.getElementById('appointmentsTableBody');
+            if(aptForm){
+                aptForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const patient = document.getElementById('aptPatientName').value.trim();
+                    const doctorSel = document.getElementById('aptDoctorId');
+                    const doctorName = doctorSel.options[doctorSel.selectedIndex]?.text || '';
+                    const date = document.getElementById('aptDate').value;
+                    const reason = document.getElementById('aptReason').value || '';
+                    const status = document.getElementById('aptStatus').value || 'pending';
+                    if(!patient || !doctorName || !date) return;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>'+escapeHtml(patient)+'</td><td>'+escapeHtml(doctorName)+'</td><td>'+escapeHtml(date)+'</td><td>'+escapeHtml(reason)+'</td><td><span class="status-badge status-'+escapeHtml(status)+'">'+escapeHtml(status)+'</span></td><td><button class="table-action-btn view">View</button></td>';
+                    if(aptBody.children.length ===1 && aptBody.children[0].textContent.includes('Loading')) aptBody.innerHTML = '';
+                    aptBody.appendChild(tr);
+                    // increment today's appointments count if date is today (basic)
+                    const todayCountEl = document.getElementById('todayAppointments');
+                    const aptDate = new Date(date);
+                    const now = new Date();
+                    if(aptDate.toDateString() === now.toDateString()){
+                        todayCountEl.textContent = parseInt(todayCountEl.textContent||'0') + 1;
+                    }
+                    closeModal('appointmentModal');
+                    aptForm.reset();
+                });
+            }
+
+            // small helper to escape text nodes
+            function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+            // simple population of doctor select based on existing table rows (keeps things connected)
+            function populateDoctorSelect(){
+                const sel = document.getElementById('aptDoctorId');
+                if(!sel) return;
+                sel.innerHTML = '';
+                const rows = doctorsTable ? Array.from(doctorsTable.querySelectorAll('tr')) : [];
+                const options = rows.map(r=> r.cells?.[0]?.textContent).filter(Boolean);
+                if(options.length === 0){
+                    const opt = document.createElement('option'); opt.value=''; opt.textContent = 'No doctors available'; sel.appendChild(opt);
+                } else {
+                    sel.innerHTML = '<option value="">Select doctor</option>';
+                    options.forEach((name, idx)=>{
+                        const o = document.createElement('option');
+                        o.value = 'd'+idx;
+                        o.textContent = name;
+                        sel.appendChild(o);
+                    });
+                }
+            }
+            // keep doctor select in sync after new doctors added
+            if(doctorForm) doctorForm.addEventListener('submit', ()=> setTimeout(populateDoctorSelect,50));
+            // initial populate
+            populateDoctorSelect();
+
+            // expose small API for console/testing
+            window._dashboard = { showSection, openModal, closeModal, populateDoctorSelect };
+        })();
+    </script>
 </body>
+
 </html>
 <!-- Cache Buster: 2025-10-24-18:36 -->
