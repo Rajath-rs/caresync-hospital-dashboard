@@ -14,12 +14,17 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase (only once)
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log('✅ Firebase initialized successfully');
-} else {
-    firebase.app();
-    console.log('✅ Firebase already initialized');
+let firebaseApp;
+try {
+    if (!firebase.apps.length) {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase initialized successfully');
+    } else {
+        firebaseApp = firebase.app();
+        console.log('✅ Firebase already initialized');
+    }
+} catch (error) {
+    console.error('❌ Firebase initialization error:', error);
 }
 
 // Export Firebase services
