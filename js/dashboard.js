@@ -1,23 +1,3 @@
-// ==========================================
-// CARESYNC HOSPITAL DASHBOARD - COMPLETE
-// All Management Controls Working
-// ==========================================
-
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyBnqbxn9N4J1lOOh7pDP7StcTfuM16mBTs",
-    authDomain: "caresync-2e5d4.firebaseapp.com",
-    projectId: "caresync-2e5d4",
-    storageBucket: "caresync-2e5d4.firebasestorage.app",
-    messagingSenderId: "588308758613",
-    appId: "1:588308758613:web:af393fd9804841cce294dc"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
 let currentUser = null;
 let currentHospitalId = null;
 let currentBedCategory = null;
