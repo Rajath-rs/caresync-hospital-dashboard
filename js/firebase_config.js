@@ -14,30 +14,55 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase (only once)
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log('✅ Firebase initialized successfully');
-} else {
-    firebase.app();
-    console.log('✅ Firebase already initialized');
+let app;
+try {
+    if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase initialized successfully');
+    } else {
+        app = firebase.app();
+        console.log('✅ Firebase already initialized');
+    }
+
+    // Initialize Analytics
+    firebase.analytics();
+    console.log('✅ Firebase Analytics initialized');
+
+    // Export Firebase services
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    const analytics = firebase.analytics();
+
+    // Configure Firestore
+    db.settings({
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+    });
+
+    // Enable offline persistence with multi-tab support
+    db.enablePersistence({
+        synchronizeTabs: true
+    }).then(() => {
+        console.log('✅ Offline persistence enabled with multi-tab support');
+    }).catch((err) => {
+        if (err.code === 'failed-precondition') {
+            console.warn('⚠️ Multiple tabs open, persistence enabled in first tab only');
+        } else if (err.code === 'unimplemented') {
+            console.warn('⚠️ Browser does not support persistence');
+        }
+    });
+
+    // Make services globally available
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+    window.fbAnalytics = analytics;
+
+    console.log('✅ Firebase services exported globally');
+} catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+    alert('Error initializing Firebase. Please check console for details.');
 }
 
-// Export Firebase services
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
-
-// Enable offline persistence
-db.enablePersistence()
-  .then(() => {
-      console.log('✅ Offline persistence enabled');
-  })
-  .catch((err) => {
-      if (err.code == 'failed-precondition') {
-          console.warn('⚠️ Multiple tabs open, persistence only works in one tab');
-      } else if (err.code == 'unimplemented') {
-          console.warn('⚠️ Browser does not support persistence');
-      }
-  });
-
-console.log('Firebase config loaded');
+// Log initialization success
+console.log('Firebase config loaded successfully');

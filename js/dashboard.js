@@ -16,16 +16,46 @@ window.onpopstate = function() {
 // AUTHENTICATION
 // ==========================================
 auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-        window.location.replace('index.html');
-        return;
+    try {
+        if (!user) {
+            console.log('No user logged in, redirecting to login...');
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        currentUser = user;
+        currentHospitalId = user.uid;
+        console.log('✅ User authenticated:', currentHospitalId);
+        
+        // Verify hospital exists in Firestore
+        const hospitalDoc = await db.collection('hospitals').doc(currentHospitalId).get();
+        
+        if (!hospitalDoc.exists) {
+            throw new Error('Hospital profile not found. Please contact support.');
+        }
+        
+        // Store hospital data
+        const hospitalData = hospitalDoc.data();
+        window.hospitalData = hospitalData;
+        
+        console.log('✅ Hospital data loaded:', hospitalData.hospitalName);
+        
+        // Initialize dashboard with verified access
+        await initializeDashboard();
+    } catch (error) {
+        console.error('❌ Authentication error:', error);
+        
+        // Show user-friendly error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `
+            <h3>⚠️ Access Error</h3>
+            <p>${error.message}</p>
+            <button onclick="window.location.href='index.html'">Return to Login</button>
+        `;
+        document.body.innerHTML = '';
+        document.body.appendChild(errorDiv);
     }
-    
-    currentUser = user;
-    currentHospitalId = user.uid;
-    console.log('✅ User authenticated:', currentHospitalId);
-    
-    await initializeDashboard();
 });
 
 // ==========================================
