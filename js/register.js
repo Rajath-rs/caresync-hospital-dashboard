@@ -1,4 +1,23 @@
+// ==========================================
+// CARESYNC HOSPITAL REGISTRATION - FIXED
+// Registration page should be accessible even when logged in
+// ==========================================
 
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBnqbxn9N4J1lOOh7pDP7StcTfuM16mBTs",
+    authDomain: "caresync-2e5d4.firebaseapp.com",
+    projectId: "caresync-2e5d4",
+    storageBucket: "caresync-2e5d4.firebasestorage.app",
+    messagingSenderId: "588308758613",
+    appId: "1:588308758613:web:af393fd9804841cce294dc",
+    measurementId: "G-WQF201CXDY"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // ==========================================
 // ALLOW ACCESS TO REGISTRATION PAGE
